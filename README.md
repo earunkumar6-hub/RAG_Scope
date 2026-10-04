@@ -1,5 +1,13 @@
 # RAGScope
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](backend/pyproject.toml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](backend)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](frontend)
+[![Neo4j 5](https://img.shields.io/badge/Neo4j-5-4581C3?logo=neo4j&logoColor=white)](docker-compose.yml)
+[![Chroma](https://img.shields.io/badge/vector%20store-Chroma-FF6446)](backend)
+[![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991?logo=openai&logoColor=white)](.env.example)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+
 *Hybrid vector + knowledge-graph RAG, with every stage visible, guarded and measured.*
 
 A transparent hybrid RAG system: a Chroma vector store plus a knowledge graph (entity vertices and relation edges), with strict JSON input validation, input and output guardrails, evaluation, and a web UI that shows every pipeline stage live, with tunable parameters.
