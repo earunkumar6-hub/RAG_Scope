@@ -1,0 +1,22 @@
+Northwind Solar - Customer FAQ
+
+How long does an installation take?
+A typical small-business installation takes two to three working days once the structural survey and the shading analysis are approved. Larger roofs above 60 panels can take a week.
+
+Do I need planning permission?
+In Norway most rooftop systems below 50 kilowatts do not need planning permission. In the Netherlands the Rotterdam office checks local rules for every job, because protected harbour districts have extra restrictions.
+
+What happens if a panel is shaded part of the day?
+Northwind fits Tidewater Micro microinverters on partly shaded roofs. Each panel then works independently, so one shaded panel no longer drags down the output of the whole string.
+
+Can I add a battery later?
+Yes. The Fjord LFP-10 battery from Aster Cells can be added to any existing Northwind system. It stores surplus daytime energy and releases it in the evening, which lowers peak-hour electricity costs.
+
+How do I report a fault?
+Log in to the customer portal, choose "Report a fault" and attach photos. Priya Raman's customer service team answers within two working days. Urgent safety issues should be reported by phone.
+
+What does the solar lease cost?
+Under the solar lease, financed by Harbour Leasing, the customer pays a fixed monthly fee for fifteen years. Northwind keeps ownership of the equipment and handles all repairs. At the end of the term the customer can buy the system for a fixed residual price or have it removed free of charge.
+
+Is my data safe in the customer portal?
+The portal stores inverter logs and contact details only. Energy data is never sold to third parties.

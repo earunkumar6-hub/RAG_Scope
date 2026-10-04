@@ -1,0 +1,9 @@
+.venv
+data
+**/__pycache__
+.pytest_cache
+.ruff_cache
+*.egg-info
+.env
+Dockerfile
+.dockerignore

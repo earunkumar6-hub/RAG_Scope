@@ -1,0 +1,34 @@
+Lotusgate General Insurance - Policy Wording Knowledge Base
+(Fictional company. Created as RAGScope test data.)
+
+1. About Lotusgate
+Lotusgate General Insurance Ltd. is a fictional general insurer founded in 2009 in Pune, India. Its chief executive is Anjali Deshmukh. Lotusgate sells three retail products: HomeSecure (home insurance), MotorSecure (private car insurance) and HealthSecure (family health insurance). Claims are handled by two regional claims hubs: the Chennai hub, led by Karthik Raman, serves South and West India, and the Gurugram hub, led by Neha Kapoor, serves North and East India.
+
+2. General conditions for all policies
+Free look period: a new policyholder may cancel a HomeSecure or HealthSecure policy within 15 days of receiving the policy document and get a refund of the premium, less stamp duty and any medical check-up costs. MotorSecure has no free look period.
+Grace period: a policy may be renewed up to 30 days after the expiry date without losing continuity benefits. HealthSecure does not cover any illness that starts during the grace period.
+Premium payment: premiums can be paid by UPI, net banking or card. Cash payments are accepted only up to Rs 50,000.
+Grievances: a complaint is first sent to the Grievance Officer at the policyholder's regional claims hub. If it is not resolved within 30 days, the policyholder may approach the Insurance Ombudsman.
+
+3. HomeSecure (home insurance)
+What is covered: the building and its contents against fire, lightning, explosion, storm, cyclone, flood and inundation, burglary, and accidental damage to fixed glass. Earthquake cover is available as an optional add-on.
+Basis of settlement: the building is insured on a reinstatement basis, meaning Lotusgate pays the cost of rebuilding with new materials of the same kind, without deduction for depreciation. Contents are insured on an indemnity basis, meaning depreciation is deducted.
+Excess: every HomeSecure claim carries an excess of Rs 5,000. For flood claims on a ground-floor home located in a notified flood zone, the excess is Rs 25,000 instead.
+Exclusions: wear and tear, gradual seepage or dampness, damage by rodents or insects, and loss from burglary if the home was left unoccupied for more than 60 consecutive days without informing Lotusgate.
+Under-insurance: if the sum insured is less than 85 percent of the actual rebuilding cost, the claim is reduced in the same proportion (average clause).
+
+4. MotorSecure (private car insurance)
+What is covered: own damage to the insured car from accident, fire, theft, flood, hailstorm and riots, plus third-party liability as required by the Motor Vehicles Act.
+Compulsory excess: Rs 1,000 for cars up to 1500 cc and Rs 2,000 for cars above 1500 cc.
+Zero depreciation add-on: available only for cars up to 5 years old. With this add-on, Lotusgate pays the full cost of replaced plastic, rubber, fibre and metal parts without deducting depreciation. It covers at most two claims per policy year.
+No Claim Bonus (NCB): a discount on the own-damage premium for each claim-free year: 20 percent after one year, 25 percent after two, 35 percent after three, 45 percent after four and 50 percent after five or more consecutive claim-free years. Any own-damage claim resets the NCB to zero unless the NCB Protector add-on was bought.
+Roadside assistance: provided 24x7 by Lotusgate's partner Cobalt Assist. Cobalt Assist offers towing up to 50 km to the nearest Lotusgate network garage, battery jump-start, flat-tyre change and up to 5 litres of emergency fuel.
+Exclusions: driving without a valid licence, driving under the influence of alcohol or drugs, mechanical or electrical breakdown, and use of a private car for hire or reward.
+
+5. HealthSecure (family health insurance)
+What is covered: in-patient hospitalisation for at least 24 hours, day-care procedures, pre-hospitalisation expenses for 30 days and post-hospitalisation expenses for 60 days.
+Cashless treatment: available at Lotusgate network hospitals. Cashless approvals are handled by Lotusgate's third-party administrator, CareBridge TPA.
+Waiting periods: 30 days from the first policy start for any illness (accidents are covered from day one), 24 months for listed procedures such as cataract and hernia, 24 months for maternity, and 36 months for pre-existing diseases.
+Room rent limit: normal room rent is covered up to 1 percent of the sum insured per day, and ICU charges up to 2 percent of the sum insured per day. If a costlier room is chosen, all associated charges are reduced proportionately.
+Co-payment: policyholders aged 61 or older at entry pay 20 percent of every claim.
+Cumulative bonus: the sum insured increases by 10 percent for each claim-free year, up to a maximum of 100 percent.

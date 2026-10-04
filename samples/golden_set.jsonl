@@ -1,0 +1,12 @@
+{"question": "Who founded Northwind Solar, and where?", "ground_truth": "Maya Lindqvist, an electrical engineer, founded Northwind Solar in 2014 in Bergen, Norway."}
+{"question": "When did Northwind open its Rotterdam office and who leads it?", "ground_truth": "The Rotterdam office opened in 2019 and is led by Jonas Verhoeven."}
+{"question": "Which company supplies Northwind's inverters?", "ground_truth": "Kestrel Power Systems supplies all inverters, both the Tidewater string inverter and the Tidewater Micro microinverter."}
+{"question": "When does Northwind fit microinverters instead of a string inverter?", "ground_truth": "When the shading analysis finds a panel position shaded for more than two hours a day, the crew fits Tidewater Micro microinverters instead of a Tidewater string inverter."}
+{"question": "Why are stainless steel fasteners used on coastal jobs?", "ground_truth": "Because salt spray is the main cause of corrosion on coastal roofs."}
+{"question": "How long is the NW-400 panel warranty and what does it cover?", "ground_truth": "Twenty-five years against output loss below eighty percent of the rated power; storm damage is covered by building insurance instead."}
+{"question": "How long is the inverter warranty and who provides it?", "ground_truth": "Ten years, provided by Kestrel Power Systems and passed on to the customer by Northwind."}
+{"question": "What does the Fjord LFP-10 battery warranty guarantee?", "ground_truth": "It keeps seventy percent of its capacity for ten years or 6,000 cycles, whichever comes first."}
+{"question": "Where is the battery installed and why?", "ground_truth": "In a ventilated cabinet away from direct sunlight, because high temperatures shorten battery life."}
+{"question": "What happens at the end of a solar lease?", "ground_truth": "After the fifteen-year term the customer can buy the system for a fixed residual price or have it removed free of charge."}
+{"question": "How quickly does customer service respond to a warranty claim?", "ground_truth": "Priya Raman's customer service team confirms receipt within two working days and books a technician visit within ten working days."}
+{"question": "What torque are rail bolts tightened to?", "ground_truth": "Each rail bolt is torqued to 25 newton-metres and the value is recorded in the job sheet."}

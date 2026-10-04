@@ -1,0 +1,22 @@
+# Secrets: API keys live in .env (copy .env.example)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local recordings and screenshots
+e2e/
+
+# Local data (SQLite, Chroma, uploads) when running outside Docker
+data/
+
+# Frontend build output and dependencies (see also frontend/.gitignore)
+node_modules/
+.next/

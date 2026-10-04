@@ -1,0 +1,12 @@
+{"question": "Who founded Lotusgate General Insurance and where is it based?", "ground_truth": "Lotusgate General Insurance was founded in 2009 in Pune, India; its chief executive is Anjali Deshmukh."}
+{"question": "Which claims hub serves South India and who leads it?", "ground_truth": "The Chennai claims hub, led by Karthik Raman, serves South and West India."}
+{"question": "What is the excess on a HomeSecure flood claim for a ground-floor home in a notified flood zone?", "ground_truth": "The excess is Rs 25,000 instead of the standard Rs 5,000."}
+{"question": "Which cars are eligible for the zero depreciation add-on and how many claims does it cover?", "ground_truth": "Only cars up to 5 years old are eligible, and it covers at most two claims per policy year."}
+{"question": "What No Claim Bonus applies after three claim-free years?", "ground_truth": "After three consecutive claim-free years the No Claim Bonus is 35 percent of the own-damage premium."}
+{"question": "Who provides roadside assistance and how far will they tow a car?", "ground_truth": "Cobalt Assist provides 24x7 roadside assistance and tows up to 50 km to the nearest Lotusgate network garage."}
+{"question": "What is the waiting period for pre-existing diseases under HealthSecure?", "ground_truth": "Pre-existing diseases have a 36-month waiting period."}
+{"question": "Who handles cashless health approvals and how fast is a pre-authorisation decision?", "ground_truth": "CareBridge TPA handles cashless approvals and decides on a pre-authorisation request within 1 hour (final discharge bill within 3 hours)."}
+{"question": "When is a surveyor appointed for a claim and which firm provides them?", "ground_truth": "Claims estimated above Rs 50,000 are inspected by an independent surveyor from Meridian Loss Adjusters, appointed within 72 hours of intimation."}
+{"question": "How soon must a theft be reported to the police?", "ground_truth": "The First Information Report (FIR) must be filed within 24 hours of discovering the theft or burglary."}
+{"question": "How long does Lotusgate have to settle a claim?", "ground_truth": "Lotusgate settles or rejects a claim within 30 days of receiving the last necessary document; with an investigation, within 45 days plus a further 15 days."}
+{"question": "How much did Lotusgate pay on the hailstorm claim in the worked example and why?", "ground_truth": "Rs 81,000: the Rs 82,000 estimate minus the Rs 1,000 compulsory excess for a car up to 1500 cc, with no depreciation deducted because of the zero depreciation add-on."}
