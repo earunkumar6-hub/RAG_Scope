@@ -20,3 +20,6 @@ data/
 # Frontend build output and dependencies (see also frontend/.gitignore)
 node_modules/
 .next/
+
+# Build spec (kept local)
+graphrag_studio_build_prompt.json
