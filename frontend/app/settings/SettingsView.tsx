@@ -315,6 +315,22 @@ export function SettingsView() {
           </div>
         </Section>
 
+        <Section
+          title="Display"
+          description="Turn off for end users: answer sources show only file and page, and citations no longer open the chunk text. Pipeline panels, the Prompt & context drawer and the Documents page still show (PII-masked) chunk text. This is a display setting, not access control: anyone who can open Settings can turn it back on."
+        >
+          <div className="flex items-start gap-2 py-1">
+            <Switch
+              id="display-citation-chunk-text"
+              checked={current.display.citation_chunk_text.enabled}
+              onCheckedChange={(checked) => update(["display", "citation_chunk_text", "enabled"], checked)}
+            />
+            <Label htmlFor="display-citation-chunk-text" className="text-xs font-medium">
+              chunk text in citations
+            </Label>
+          </div>
+        </Section>
+
         <Providers />
       </main>
     </div>

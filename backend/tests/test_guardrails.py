@@ -19,7 +19,14 @@ from app.guardrails.output_guards import (
 )
 from app.guardrails.pii import get_pii_engine, verhoeff_valid
 from app.llm.base import LLMError, LLMProvider, LLMResult
-from app.pipeline.query.runner import parse_citations
+from app.pipeline.query.runner import (
+    PREVIEW_CHARS,
+    SYSTEM_PROMPT,
+    WITHHELD,
+    Candidate,
+    SentenceRedactor,
+    parse_citations,
+)
 from app.schemas.config import InputGuardrails, OutputGuardrails
 from tests.helpers import FakeEmbedder, FakeLLM, FakeReranker, make_text
 from tests.test_ingest_api import ingest_ok
@@ -363,8 +370,9 @@ def test_output_pii_is_redacted_before_storing(make_client) -> None:  # noqa: AN
     with make_client(llm) as client:
         ingest_ok(client, [("notes.txt", make_text(seed=5, paragraphs=20).encode())])
         stages, events, done = run_query(client, {"query": "What links the graph entities?"})
-        # the live stream carried the raw answer (it is not persisted)...
-        assert "leak.me" in "".join(e["data"]["text"] for e in events if e["event"] == "token")
+        # the live stream is masked sentence by sentence...
+        streamed = "".join(e["data"]["text"] for e in events if e["event"] == "token")
+        assert "leak.me" not in streamed and "<EMAIL_ADDRESS>" in streamed
         q9 = stages["Q9_output_guardrail"]["data"]
         assert q9["original_redacted"] and "<EMAIL_ADDRESS>" in q9["original_answer"]
         run_id = stages["Q1_validate"]["run_id"]
@@ -374,7 +382,7 @@ def test_output_pii_is_redacted_before_storing(make_client) -> None:  # noqa: AN
             ).all()
             result = s.get(Run, run_id).result
         stored = json.dumps(payloads) + json.dumps(result) + json.dumps(done)
-        assert "leak.me" not in stored  # ...but nothing stored or sent at the end has it
+        assert "leak.me" not in stored  # ...and nothing stored or sent at the end has it
 
         # with pii_leak off the final answer keeps the PII, so the stored original may too
         cfg = client.get("/api/config").json()
@@ -383,6 +391,55 @@ def test_output_pii_is_redacted_before_storing(make_client) -> None:  # noqa: AN
         llm.judges = [[True, True]] * 2
         stages, _, _ = run_query(client, {"query": "What links the graph entities now?"})
         assert "leak.me" in stages["Q8_generate"]["data"]["answer"]
+
+
+def test_sentence_redactor_masks_each_sentence_before_publishing() -> None:
+    sent: list[str] = []
+    live = SentenceRedactor(sent.append, lambda t: t.replace("ravi@example.com", "<EMAIL>"))
+    for delta in ["Mail ravi", "@exam", "ple.com", ". Done", "\nBye"]:
+        live.feed(delta)
+    assert sent == ["Mail <EMAIL>.", " Done\n"]  # dots inside the email never split it
+    live.flush()
+    assert "".join(sent) == "Mail <EMAIL>. Done\nBye"
+
+
+def test_sentence_redactor_withholds_stream_when_masking_fails() -> None:
+    def boom(text: str) -> str:
+        raise RuntimeError("detector down")
+
+    sent: list[str] = []
+    live = SentenceRedactor(sent.append, boom)
+    live.feed("One. Two. ")
+    live.feed("Three.")
+    live.flush()
+    assert sent == [WITHHELD]
+
+
+def test_pii_in_context_is_masked_in_shown_prompt(make_client) -> None:  # noqa: ANN001
+    llm = ScriptLLM(
+        classifier={"prompt_injection": 0.0, "toxicity": 0.0},
+        judges=[[True]] * 2,
+        answer="Graphs link entities.",
+    )
+    paras = make_text(seed=5, paragraphs=20).split("\n\n")
+    text = "\n\n".join("Write to carol.ops@example.com. " + p for p in paras)
+    with make_client(llm) as client:
+        ingest_ok(client, [("notes.txt", text.encode())])
+        stages, _, _ = run_query(
+            client,
+            {"query": "What links the graph entities?", "params": {"similarity_threshold": 0}},
+        )
+    system, user = stages["Q8_generate"]["data"]["prompt"]
+    assert system["content"] == SYSTEM_PROMPT  # the rules stay readable
+    assert "carol.ops" not in user["content"] and "<EMAIL_ADDRESS>" in user["content"]
+    previews = json.dumps(stages["Q4_vector_retrieve"]["data"]["candidates"])
+    assert "carol.ops" not in previews and "<EMAIL_ADDRESS>" in previews
+
+
+def test_chunk_preview_is_masked_before_it_is_cut() -> None:
+    text = "x" * (PREVIEW_CHARS - 4) + " ABCPM1234K"  # a raw cut would keep "ABC"
+    view = Candidate("c1", text, 0.9, {}).view(lambda t: t.replace("ABCPM1234K", "<IN_PAN>"))
+    assert "ABC" not in view["text"] and view["text"].endswith(" <IN…")
 
 
 def test_pii_detection_can_be_disabled(guarded) -> None:  # noqa: ANN001

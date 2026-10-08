@@ -100,6 +100,32 @@ def test_delete_promotes_duplicates_and_moves_graph_facts(app: FastAPI, client: 
             )
 
 
+RAW_PII = ["ABCPM1234K", "2345 6789 0124", "ravi.menon@example.com", "98765 43210"]
+
+
+def test_chunk_text_is_served_with_pii_masked(client: TestClient) -> None:
+    text = (
+        "Policyholder: Ravi Menon. PAN: ABCPM1234K. Aadhaar: 2345 6789 0124. "
+        "Email: ravi.menon@example.com. Phone: +91 98765 43210.\n\n"
+    ) + make_text(seed=3, paragraphs=4)
+    ingest_ok(client, [("pii.txt", text.encode())])
+    first = next(c for c in chunks() if "ABCPM1234K" in c.text)
+
+    one = client.get(f"/api/chunks/{first.id}")  # the citation popup
+    listed = client.get("/api/chunks")  # the Documents page
+    assert one.status_code == listed.status_code == 200
+    served = one.text + listed.text
+    assert not [v for v in RAW_PII if v in served]
+    for placeholder in ("<IN_PAN>", "<IN_AADHAAR>", "<EMAIL_ADDRESS>", "<PHONE_NUMBER>"):
+        assert placeholder in one.json()["text"]
+    assert "ABCPM1234K" in next(c for c in chunks() if c.id == first.id).text  # store unchanged
+
+    cfg = client.get("/api/config").json()
+    cfg["guardrails"]["output"]["pii_leak"]["enabled"] = False
+    assert client.put("/api/config", json=cfg).status_code == 200
+    assert "ABCPM1234K" in client.get(f"/api/chunks/{first.id}").json()["text"]
+
+
 def test_delete_unknown_and_while_ingesting(client: TestClient) -> None:
     resp = client.delete("/api/documents/nope")
     assert resp.status_code == 404 and resp.json()["error"] == "NOT_FOUND"

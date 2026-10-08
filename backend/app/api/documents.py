@@ -1,6 +1,8 @@
 """Corpus browsing (``GET /api/documents``, ``/api/chunks``, ``/api/clusters``) and
 ``DELETE /api/documents/{id}``."""
 
+import logging
+from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -10,15 +12,37 @@ from sqlmodel import Session, col, func, select
 from app.db.models import Chunk, Cluster, Document
 from app.db.session import get_session
 from app.eval import runner as eval_runner
+from app.guardrails.pii import WITHHELD, get_pii_engine
 from app.pipeline.ingestion.deletion import (
     DocumentNotFound,
     IngestRunning,
     delete_document,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["documents"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
+
+
+def chunk_masker(request: Request) -> Callable[[Chunk], Chunk]:
+    """Served copy of a chunk with PII masked in its text (when the output pii_leak guard is
+    on). The stored chunk, and what retrieval sends to the LLM, are unchanged."""
+    if not request.app.state.runtime_config.get().guardrails.output.pii_leak.enabled:
+        return lambda chunk: chunk
+
+    def mask(chunk: Chunk) -> Chunk:
+        try:
+            text = get_pii_engine().mask(chunk.text)[0]
+        except Exception:  # never serve what could not be checked
+            logger.warning("PII redaction failed; withholding chunk text", exc_info=True)
+            text = WITHHELD
+        return Chunk.model_validate(chunk.model_dump() | {"text": text})
+
+    return mask
+
+
+MaskDep = Annotated[Callable[[Chunk], Chunk], Depends(chunk_masker)]
 
 
 class ChunkPage(BaseModel):
@@ -75,6 +99,7 @@ def remove_document(document_id: str, request: Request) -> DocumentDeleted:
 @router.get("/chunks", response_model=ChunkPage)
 def list_chunks(
     session: SessionDep,
+    mask: MaskDep,
     document_id: str | None = None,
     cluster_id: int | None = None,
     page: Annotated[int | None, Query(ge=1)] = None,
@@ -97,15 +122,15 @@ def list_chunks(
     items = session.exec(
         stmt.order_by(Chunk.document_id, Chunk.chunk_index).offset(offset).limit(limit)
     ).all()
-    return ChunkPage(items=list(items), total=total, offset=offset, limit=limit)
+    return ChunkPage(items=[mask(c) for c in items], total=total, offset=offset, limit=limit)
 
 
 @router.get("/chunks/{chunk_id}", response_model=Chunk)
-def get_chunk(chunk_id: str, session: SessionDep) -> Chunk:
+def get_chunk(chunk_id: str, session: SessionDep, mask: MaskDep) -> Chunk:
     chunk = session.get(Chunk, chunk_id)
     if chunk is None:
         raise HTTPException(status_code=404, detail=f"Unknown chunk '{chunk_id}'")
-    return chunk
+    return mask(chunk)
 
 
 @router.get("/clusters", response_model=list[Cluster])

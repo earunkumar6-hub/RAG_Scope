@@ -83,6 +83,7 @@ def query(body: QueryRequest, request: Request, background: BackgroundTasks) -> 
         config.guardrails,
         pii_counts,
         online_eval=config.evaluation.online.enabled,
+        citation_text=config.display.citation_chunk_text.enabled,
     )
     background.add_task(job.run)
     return QueryAccepted(run_id=run_id, params=params)

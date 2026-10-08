@@ -261,7 +261,7 @@ def run_input_guards(
                 GuardCheck(
                     "off_topic",
                     "warn",
-                    f"best topic similarity {sim:.2f} < {off.threshold:.2f}: the documents may "
+                    f"best topic similarity {sim:.3f} < {off.threshold:.3f}: the documents may "
                     "not cover this question",
                     score=sim,
                     threshold=off.threshold,
@@ -272,7 +272,7 @@ def run_input_guards(
                 GuardCheck(
                     "off_topic",
                     "pass",
-                    f"best topic similarity {sim:.2f}",
+                    f"best topic similarity {sim:.3f}",
                     score=sim,
                     threshold=off.threshold,
                 )

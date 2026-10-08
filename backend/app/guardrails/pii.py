@@ -10,6 +10,7 @@ import threading
 from dataclasses import dataclass
 
 PII_TYPES = ["EMAIL_ADDRESS", "PHONE_NUMBER", "CREDIT_CARD", "IN_AADHAAR", "IN_PAN"]
+WITHHELD = "[withheld: PII redaction was unavailable]"
 SCORE_THRESHOLD = 0.4  # phone matches score 0.4 (validated by phonenumbers) without context words
 
 # Verhoeff checksum tables (Aadhaar's last digit)

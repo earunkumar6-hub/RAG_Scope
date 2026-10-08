@@ -131,6 +131,13 @@ class EvaluationSettings(BaseModel):
     online: Guard = Guard()  # Q10 per-query metrics (adds one cached LLM judge call)
 
 
+class DisplaySettings(BaseModel):
+    model_config = STRICT
+
+    # off: answer citations carry only file and page (no chunk text, no chunk popup)
+    citation_chunk_text: Guard = Guard()
+
+
 class RuntimeConfig(BaseModel):
     """Editable configuration persisted to ``data/runtime_config.json``."""
 
@@ -139,3 +146,4 @@ class RuntimeConfig(BaseModel):
     defaults: PipelineDefaults = PipelineDefaults()
     guardrails: GuardrailSettings = GuardrailSettings()
     evaluation: EvaluationSettings = EvaluationSettings()
+    display: DisplaySettings = DisplaySettings()

@@ -35,7 +35,7 @@ from app.guardrails.input_guards import (
     run_input_guards,
 )
 from app.guardrails.output_guards import NOT_FOUND, OutputResult, run_output_guards
-from app.guardrails.pii import get_pii_engine
+from app.guardrails.pii import WITHHELD, get_pii_engine
 from app.llm.base import LLMProvider
 from app.llm.usage import MeteredLLM, UsageMeter, active_meter
 from app.pipeline.ingestion.embedder import Embedder
@@ -81,7 +81,42 @@ BRACKET_RE = re.compile(r"\[([^\[\]]+)\]")
 
 CENTROIDS = CentroidCache()
 CHANGED_VERDICTS = {"regenerated", "repaired", "replaced", "redacted"}
-WITHHELD = "[withheld: PII redaction was unavailable]"
+
+
+class SentenceRedactor:
+    """Holds streamed tokens back to a sentence end (or newline), masks each piece, then
+    publishes it, so raw PII never reaches the client while the answer streams. A sentence end
+    is only taken once the following whitespace arrives: dots inside emails or ids never split.
+    If masking fails, the stream is withheld for the rest of the answer (Q9 still runs)."""
+
+    BOUNDARY = re.compile(r"[.!?](?=\s)|\n")
+
+    def __init__(self, publish: Callable[[str], None], mask: Callable[[str], str]):
+        self.publish, self.mask = publish, mask
+        self.buf = ""
+        self.failed = False
+
+    def feed(self, delta: str) -> None:
+        self.buf += delta
+        cut = max((m.end() for m in self.BOUNDARY.finditer(self.buf)), default=0)
+        if cut:
+            self._send(self.buf[:cut])
+            self.buf = self.buf[cut:]
+
+    def flush(self) -> None:
+        if self.buf:
+            self._send(self.buf)
+            self.buf = ""
+
+    def _send(self, text: str) -> None:
+        if self.failed:
+            return
+        try:
+            text = self.mask(text)
+        except Exception:
+            logger.warning("PII redaction failed; withholding the live stream", exc_info=True)
+            self.failed, text = True, WITHHELD
+        self.publish(text)
 
 
 @dataclass
@@ -115,8 +150,10 @@ class Candidate:
     filtered: str | None = None  # reason the candidate was dropped at Q4
     rerank_score: float | None = None
 
-    def view(self) -> dict[str, Any]:
-        text = self.text if len(self.text) <= PREVIEW_CHARS else self.text[:PREVIEW_CHARS] + "…"
+    def view(self, mask: Callable[[str], str] | None = None) -> dict[str, Any]:
+        # Mask before cutting: a cut could split a PII value so the detector no longer sees it.
+        text = mask(self.text) if mask else self.text
+        text = text if len(text) <= PREVIEW_CHARS else text[:PREVIEW_CHARS] + "…"
         return {
             "chunk_id": self.chunk_id,
             "document_id": self.metadata.get("document_id"),
@@ -244,11 +281,13 @@ class QueryJob:
         pii_counts: dict[str, int] | None = None,
         online_eval: bool = True,
         precision_judge: bool = True,
+        citation_text: bool = True,
     ):
         """``request.query`` must already be PII-masked (done by the API before persisting).
 
         ``online_eval`` runs Q10; ``precision_judge`` lets Q10 call the context-precision judge
         (offline eval turns it off and judges precision against its ground truth instead).
+        ``citation_text`` off: answer citations carry file and page only.
         """
         self.run_id = run_id
         self.request = request
@@ -257,6 +296,7 @@ class QueryJob:
         self.pii_counts = pii_counts or {}
         self.online_eval = online_eval
         self.precision_judge = precision_judge
+        self.citation_text = citation_text
         self.guard_log: dict[str, list[dict[str, Any]]] = {}
         self.rec = StageRecorder(deps.bus, run_id)
         self.meter = UsageMeter(lambda: self.rec.current)
@@ -403,7 +443,7 @@ class QueryJob:
             kept = [c for c in candidates if c.filtered is None]
             collapsed = sum(len(c.collapsed_from) for c in candidates)
             st.data = {
-                "candidates": [c.view() for c in candidates],
+                "candidates": [c.view(self._redact) for c in candidates],
                 "fetched": len(hits),
                 "kept": len(kept),
                 "filtered": len(candidates) - len(kept),
@@ -581,8 +621,9 @@ class QueryJob:
 
     # ------------------------------------------------------------------ Q8
     def _redact(self, text: str) -> str:
-        """PII-masked copy of pre-Q9 LLM text for persisting (when pii_leak is on). The live
-        token stream is not persisted; stage events and the run record are."""
+        """PII-masked copy of text the run stores or shows: pre-Q9 LLM text, the prompt and chunk
+        previews (when pii_leak is on). The live token stream is masked separately, sentence by
+        sentence (``SentenceRedactor``)."""
         if not self.guardrails.output.pii_leak.enabled or not text:
             return text
         try:
@@ -604,22 +645,31 @@ class QueryJob:
 
             messages = build_messages(self.request.query, context, facts)
             llm = self.deps.llm_factory()
+
+            def publish(text: str) -> None:
+                bus.publish(self.run_id, "token", {"text": text})
+
+            live = None
+            if self.guardrails.output.pii_leak.enabled:
+                live = SentenceRedactor(publish, lambda t: get_pii_engine().mask(t)[0])
             result = llm.stream(
                 messages,
-                lambda delta: bus.publish(self.run_id, "token", {"text": delta}),
+                live.feed if live else publish,
                 temperature=p.temperature,
                 seed=p.seed,
                 max_tokens=MAX_ANSWER_TOKENS,
             )
+            if live:
+                live.flush()
             by_id = {c.chunk_id: c for c in context}
             cited, unknown = parse_citations(result.text, set(by_id))
-            # Preview text only: the full chunk is already in ``prompt`` and served by
-            # GET /api/chunks/{chunk_id}; repeating it could push Q8 past the SSE payload cap.
-            citations = [
-                {k: v for k, v in by_id[cid].view().items() if k != "filtered"} for cid in cited
-            ]
+            citations = self._citations(result.text, context)
             st.data = {
-                "prompt": messages,
+                # Context chunks may hold PII: the shown/stored copy is masked (the rules aren't)
+                "prompt": [
+                    m if m["role"] == "system" else m | {"content": self._redact(m["content"])}
+                    for m in messages
+                ],
                 "context_chunk_ids": list(by_id),
                 "answer": self._redact(result.text),
                 "citations": citations,
@@ -640,9 +690,16 @@ class QueryJob:
 
     # ------------------------------------------------------------------ Q9
     def _citations(self, answer: str, context: list[Candidate]) -> list[dict[str, Any]]:
+        """Cited chunks with a preview only: the full chunk is already in Q8's ``prompt`` and
+        served by GET /api/chunks/{chunk_id}; repeating it could push Q8 past the SSE payload
+        cap. With ``citation_text`` off, citations carry file and page but no text at all."""
         by_id = {c.chunk_id: c for c in context}
         cited, _ = parse_citations(answer, set(by_id))
-        return [{k: v for k, v in by_id[cid].view().items() if k != "filtered"} for cid in cited]
+        hidden = {"filtered"} if self.citation_text else {"filtered", "text"}
+        return [
+            {k: v for k, v in by_id[cid].view(self._redact).items() if k not in hidden}
+            for cid in cited
+        ]
 
     def _q9_output_guardrail(self, gen: Generation) -> dict[str, Any]:
         g = self.guardrails.output

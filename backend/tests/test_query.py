@@ -141,6 +141,27 @@ def test_query_end_to_end(query_client: TestClient, llm: FakeLLM) -> None:
     assert first_token < order.index(("stage", "Q8_generate", "success"))
 
 
+def test_citations_carry_only_file_and_page_when_chunk_text_hidden(
+    query_client: TestClient, llm: FakeLLM
+) -> None:
+    _ingest(query_client)
+    cfg = query_client.get("/api/config").json()
+    assert cfg["display"]["citation_chunk_text"]["enabled"] is True  # default: text shown
+    cfg["display"]["citation_chunk_text"]["enabled"] = False
+    assert query_client.put("/api/config", json=cfg).status_code == 200
+    stages, events, done = run_query(
+        query_client, {"query": QUERY, "params": {"similarity_threshold": 0.0, "top_n": 2}}
+    )
+    answer = next(e["data"] for e in events if e["event"] == "answer")
+    for cites in (
+        done["citations"],
+        answer["citations"],
+        stages["Q8_generate"]["data"]["citations"],
+    ):
+        assert cites
+        assert all("text" not in c and c["filename"] == "notes.txt" and c["page"] for c in cites)
+
+
 def test_threshold_filters_everything_without_calling_llm(
     query_client: TestClient, llm: FakeLLM
 ) -> None:

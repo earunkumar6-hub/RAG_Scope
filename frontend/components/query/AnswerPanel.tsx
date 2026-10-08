@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Ban, FileSearch, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -9,6 +10,7 @@ import { EvalGauges } from "@/components/query/EvalGauges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { api } from "@/lib/api";
 import { splitAnswer } from "@/lib/citations";
 import type { Citation, RunState } from "@/lib/stages";
 
@@ -39,6 +41,11 @@ export function AnswerPanel({ run }: { run: RunState }) {
   const error = run.done?.status === "error" ? run.done.error : null;
   const prompt: { role: string; content: string }[] | undefined = q8data.prompt;
   const index = (id: string) => [...valid].indexOf(id) + 1;
+  // Settings > Display: off shows sources as file and page only (also for replayed runs).
+  // Until the config loads, citations stay closed.
+  const config = useQuery({ queryKey: ["config"], queryFn: api.config });
+  const showText = config.data?.display.citation_chunk_text.enabled === true;
+  const where = (c?: Citation) => (c ? `${c.filename} p. ${c.page}` : "");
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-4">
@@ -73,6 +80,14 @@ export function AnswerPanel({ run }: { run: RunState }) {
           {splitAnswer(answer, valid).map((seg, i) =>
             seg.type === "text" ? (
               <span key={i}>{seg.text}</span>
+            ) : !showText ? (
+              <span
+                key={i}
+                title={where(known.get(seg.chunkId))}
+                className="mx-0.5 rounded bg-primary/10 px-1 align-super text-[10px] font-medium text-primary"
+              >
+                {index(seg.chunkId)}
+              </span>
             ) : (
               <button
                 key={i}
@@ -95,6 +110,12 @@ export function AnswerPanel({ run }: { run: RunState }) {
           <ol className="space-y-1">
             {citations.map((c) => (
               <li key={c.chunk_id}>
+                {!showText ? (
+                  <div className="flex gap-2 px-1 py-0.5 text-xs">
+                    <span className="font-medium text-primary">{index(c.chunk_id)}</span>
+                    <span>{where(c)}</span>
+                  </div>
+                ) : (
                 <button
                   type="button"
                   onClick={() => setOpenChunk(c.chunk_id)}
@@ -106,13 +127,14 @@ export function AnswerPanel({ run }: { run: RunState }) {
                     <span className="ml-1 font-mono text-muted-foreground">{c.chunk_id}</span>
                   </span>
                 </button>
+                )}
               </li>
             ))}
           </ol>
         </div>
       )}
       <EvalGauges run={run} />
-      <ChunkDialog chunkId={openChunk} filename={known.get(openChunk ?? "")?.filename} onClose={() => setOpenChunk(null)} />
+      <ChunkDialog chunkId={showText ? openChunk : null} filename={known.get(openChunk ?? "")?.filename} onClose={() => setOpenChunk(null)} />
       <Sheet open={drawer} onOpenChange={setDrawer}>
         <SheetContent side="right" className="w-full sm:max-w-2xl">
           <SheetHeader>
